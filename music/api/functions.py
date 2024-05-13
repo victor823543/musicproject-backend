@@ -865,6 +865,7 @@ def generate_melodies_session(notes_included, difficulty, start, length, melody_
             numbers = get_numbers()
         else: 
             key_numbers = list(range(60, 84))
+            numbers = get_numbers()
         
 
         melody_numbers = [[key_numbers[x]] for x in numbers]
