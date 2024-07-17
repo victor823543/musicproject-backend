@@ -24,6 +24,14 @@ def signup(request):
         return Response({'message': 'login successfull'})
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_username(request):
+    user_name = request.user.username
+    return Response({'username': user_name})
+
+
+
 '''
 Old login view
 
@@ -228,12 +236,23 @@ def create_song(request):
 @permission_classes([AllowAny]) 
 def transpose(request):
     data = json.loads(request.body)
+    print(data)
     transposed_song = {}
     transposed_chords = {}
     chords_list = {}
     ordered_chord_list = []
     interval = intervals.determine(data['oldKey'], data['key'], True)
     interval_number = intervals.measure(data['oldKey'], data['key'])
+    old_chord_objects = data['chord_objects']
+
+    def transpose_name(old_name):
+        new_root = intervals.from_shorthand(chords.from_shorthand(old_name)[0], interval)
+        try:
+            new_addition = old_name[1:] if not old_name[1] in ['#', 'b'] else old_name[2:]
+        except IndexError:
+            new_addition = ''
+        new_name = new_root + new_addition
+        return new_name
 
     #Create transposed song
     for verse_key, verse in data['song'].items():
@@ -265,30 +284,34 @@ def transpose(request):
         #Add verse to song
         transposed_song[verse_key] = new_verse
 
-    chord_name_list = []
     #Create transposed chord list
-    for chord in data['chords'].values():
+    for old_name, chord in data['chords'].items():
         new_chord_numbers = [x + interval_number for x in chord]
         if new_chord_numbers[0] - 12 >= 60:
             new_chord_numbers = [x - 12 for x in new_chord_numbers]
         
-        new_chord_names = []
-        for n in new_chord_numbers:
-            #c = Note()
-            #c.from_int(n)
-            n = n - 60 if n - 60 < 12 else n - 72
-            c = notes.int_to_note(n, 'b')
-            new_chord_names.append(c)
-        print(new_chord_numbers)
-        print(new_chord_names)
-        print(chords.determine(new_chord_names, True))
-        new_key = chords.determine(new_chord_names, True)[0]
-        transposed_chords[new_key] = new_chord_numbers
+        new_chord_name = transpose_name(old_name)
 
-        chord_name_list.append(new_chord_names)
+        transposed_chords[new_chord_name] = new_chord_numbers
     
     #Create transposed chord objects list
-    new_chord_objects = [{'name': chords.determine(c, True, True, True), 'chord': c, 'root': c[0], 'addition': chords.determine(c, True, True, True)[0][len(c[0]):]} for c in chord_name_list]
+    new_chord_objects = []
+
+    for object in old_chord_objects:
+        new_object = {}
+        new_object['name'] = transpose_name(object['name'][0])
+        new_object['chord'] = chords.from_shorthand(new_object['name'])
+        new_object['root'] = new_object['chord'][0]
+        new_object['addition'] = object['addition']
+        '''current_chord_numbers = transposed_chords[new_object['name']]
+        new_object_chord = []
+        for n in current_chord_numbers:
+            n = n - 60 if n - 60 < 12 else n - 72
+            c = notes.int_to_note(n, 'b')
+            new_object_chord.append(c)'''
+        
+        new_chord_objects.append(new_object)
+
 
     output = {
         'key': data['key'],

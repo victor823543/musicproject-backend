@@ -21,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '' #Change before production
+SECRET_KEY = '******' #Change before production
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -105,7 +105,7 @@ DATABASES = {
 
         'USER': 'victor',
 
-        'PASSWORD': '', #Change before usage of database
+        'PASSWORD': '*****', #Change before usage of database
 
         'HOST': 'database-1.cbcyi8ms6ovf.eu-north-1.rds.amazonaws.com',
 
